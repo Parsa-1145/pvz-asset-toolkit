@@ -38,7 +38,7 @@ tasks.register('runDemo', JavaExec) {
 
 publishing {
     publications {
-        maven(MavenPublication) {
+        mavenJava(MavenPublication) {
             from components.java
         }
     }
