@@ -131,14 +131,49 @@ public final class PamPlayer {
      * @param time The current playback time in seconds.
      */
     public void draw(Batch batch, String pam, String clip, float time, float x, float y, boolean loop) {
-        drawInternal(batch, baked(pam), clip, time, loop, x, y, null, null);
+        BakedAnimation ba = baked(pam);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, null, null);
     }
     public void draw(Batch batch, String pam, String clip, float time, float x, float y, boolean loop,
             Map<String, Boolean> partsVisibility) {
-        drawInternal(batch, baked(pam), clip, time, loop, x, y, partsVisibility, null);
+        BakedAnimation ba = baked(pam);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, partsVisibility, null);
     }
     public void drawPart(Batch batch, String pam, String clip, float time, float x, float y, String part) {
-        drawInternal(batch, baked(pam), clip, time, true, x, y, null, part);
+        BakedAnimation ba = baked(pam);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, true, x, y, null, part);
+    }
+
+
+    /**
+     * Retrieves an optimized clip handle to eliminate String lookups during rendering.
+     * @return The cached clip, or null if the animation is not yet loaded.
+     */
+    public PamClip getClip(String pam, String clip) {
+        BakedAnimation ba = baked(pam);
+        if (ba == null) return null;
+        int[] range = ba.range(clip);
+        float duration = (range[1] - range[0] + 1) / ba.frameRate;
+        return new PamClip(ba, range, duration);
+    }
+
+    /**
+     * Renders a PAM animation clip using an optimized, cached handle.
+     * This avoids expensive String lookups in the hot render loop.
+     */
+    public void draw(Batch batch, PamClip clip, float time, float x, float y, boolean loop) {
+        if (clip != null) {
+            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, null, null);
+        }
+    }
+
+    /**
+     * Renders a PAM animation clip using an optimized, cached handle, with custom visibility.
+     */
+    public void draw(Batch batch, PamClip clip, float time, float x, float y, boolean loop, Map<String, Boolean> partsVisibility) {
+        if (clip != null) {
+            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, partsVisibility, null);
+        }
     }
 
     // clip info
@@ -242,7 +277,7 @@ public final class PamPlayer {
      * maps the UV texture coordinates, and submits the 20-float vertex array to the Batch.</li>
      * </ol>
      */
-    private void drawInternal(Batch batch, BakedAnimation ba, String clip, float time, boolean loop,
+    private void drawInternal(Batch batch, BakedAnimation ba, int[] range, float time, boolean loop,
             float x, float y, Map<String, Boolean> partVisibility, String whiteListedPart) {
         if (ba == null || ba.frames.length == 0)
             return;
@@ -251,7 +286,6 @@ public final class PamPlayer {
         float ch = ba.canvasHeight > 0f ? ba.canvasHeight : 1f;
         root.set(1f, 0f, 0f, -1f, x - cw / 2f, y + ch / 2f);
 
-        int[] range = ba.range(clip);
         int span = Math.max(1, range[1] - range[0] + 1);
         int fi = (int) Math.floor(time * ba.frameRate);
         if (fi < 0) {
