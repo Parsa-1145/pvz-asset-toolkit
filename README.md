@@ -33,7 +33,7 @@ PamPlayer player = new PamPlayer(textures, assetsFolder);
 
 ### 2. Loading & Rendering Animations
 
-You can render clips dynamically by name, or use optimized `ClipRef` handles to eliminate string lookups in the render loop.
+You can render clips dynamically by name, or use `ClipRef` handles to eliminate string lookups in the render loop.
 
 #### Dynamic Rendering:
 
@@ -52,7 +52,7 @@ public void render() {
 }
 ```
 
-#### Synchronous / `ClipRef` Optimized Rendering (Recommended):
+#### `ClipRef` Rendering:
 
 ```java
 // Preload synchronously during setup
@@ -100,11 +100,3 @@ The repository includes a runnable playground demo (`Demo.java`) located in the 
    ```
 
 <img width="688" height="644" alt="libPVZ_Demo" src="https://github.com/user-attachments/assets/0d496925-54bb-4902-8f8e-3c431b3c632c" />
-
----
-
-## Disclaimer
-
-This library is an educational tool. The source code of `libpvz` is provided under the MIT License.
-
-**All "Plants vs. Zombies" assets, animations, file formats, and characters are the intellectual property of Electronic Arts and PopCap Games.** This project is not affiliated with, endorsed by, or sponsored by EA. Any proprietary assets used in conjunction with this library are strictly for educational purposes.
