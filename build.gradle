@@ -2,8 +2,6 @@ plugins {
     id 'java-library'
     id 'maven-publish'
 }
-group = 'pvz'
-version = '0.1.0'
 ext { gdxVersion = '1.12.1' }
 repositories {
     maven { url 'https://maven.myket.ir' }
@@ -11,8 +9,8 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 java {
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
 }
 tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
 dependencies {
@@ -36,4 +34,12 @@ tasks.register('runDemo', JavaExec) {
         '--enable-native-access=ALL-UNNAMED',
         '-Dorg.lwjgl.system.JNINativeInterfaceSize=233'
     ]
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+        }
+    }
 }
