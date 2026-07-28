@@ -23,10 +23,10 @@ dependencies {
     testRuntimeOnly "com.badlogicgames.gdx:gdx-platform:${gdxVersion}:natives-desktop"
 }
 
-tasks.register('runSmokeTest', JavaExec) {
+tasks.register('runDemo', JavaExec) {
     group = 'verification'
-    description = 'Runs the standalone smoke test playground'
-    mainClass = 'pvz.smoke.SmokeTest'
+    description = 'Runs the standalone libpvz playground demo'
+    mainClass = 'pvz.demo.Demo'
     classpath = sourceSets.test.runtimeClasspath
     
     // Forward any -Dpvz.* properties from Gradle to the running application

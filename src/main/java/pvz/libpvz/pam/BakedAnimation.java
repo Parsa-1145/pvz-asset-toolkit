@@ -63,7 +63,7 @@ final class BakedAnimation {
             if (name.contains("custom")) f |= FLAG_CUSTOM;
             if (name.equals("ground_swatch")) f |= FLAG_GROUND_SWATCH;
             if (name.equals("ground_swatch_plane")) f |= FLAG_GROUND_SWATCH_PLANE;
-            if (name.equals("arm_upper_bone")) f |= FLAG_ARM_UPPER_BONE;
+            if (name.contains("arm_outer_upper_bone")) f |= FLAG_ARM_UPPER_BONE;
             return f;
         }
     }

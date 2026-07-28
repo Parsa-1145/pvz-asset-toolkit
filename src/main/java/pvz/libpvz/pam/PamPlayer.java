@@ -54,7 +54,7 @@ public final class PamPlayer {
             while (true) {
                 try {
                     String pam = loadQueue.take();
-                    PamData anim = loadAnimation(pam);
+                    PamData anim = readAnimationFile(pam);
                     List<String> requiredAtlases = new ArrayList<>();
                     for (PamData.Image img : anim.images) {
                         pvz.libpvz.textures.ResourceIndex.ImageEntry entry = textures.getResourceIndex()
@@ -102,11 +102,11 @@ public final class PamPlayer {
         worker.setName("PamPlayerWorker");
         worker.start();
     }
-    PamData loadAnimation(String animationPath) {
-        return loadAnimation(new FileHandle(pamFolder.path() + "/" + animationPath));
+    private PamData readAnimationFile(String animationPath) {
+        return readAnimationFile(new FileHandle(pamFolder.path() + "/" + animationPath));
     }
     
-    PamData loadAnimation(FileHandle pamFile) {
+    private PamData readAnimationFile(FileHandle pamFile) {
         String key = pamFile.path();
         PamData cached = animationByPath.get(key);
         if (cached != null) {
@@ -131,16 +131,16 @@ public final class PamPlayer {
      * @param time The current playback time in seconds.
      */
     public void draw(Batch batch, String pam, String clip, float time, float x, float y, boolean loop) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedAsync(pam);
         if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, null, null);
     }
     public void draw(Batch batch, String pam, String clip, float time, float x, float y, boolean loop,
             Map<String, Boolean> partsVisibility) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedAsync(pam);
         if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, partsVisibility, null);
     }
     public void drawPart(Batch batch, String pam, String clip, float time, float x, float y, String part) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedAsync(pam);
         if (ba != null) drawInternal(batch, ba, ba.range(clip), time, true, x, y, null, part);
     }
 
@@ -149,19 +149,19 @@ public final class PamPlayer {
      * Retrieves an optimized clip handle to eliminate String lookups during rendering.
      * @return The cached clip, or null if the animation is not yet loaded.
      */
-    public PamClip getClip(String pam, String clip) {
-        BakedAnimation ba = baked(pam);
+    public ClipRef getClip(String pam, String clip) {
+        BakedAnimation ba = bakedAsync(pam);
         if (ba == null) return null;
         int[] range = ba.range(clip);
         float duration = (range[1] - range[0] + 1) / ba.frameRate;
-        return new PamClip(ba, range, duration);
+        return new ClipRef(ba, range, duration);
     }
 
     /**
      * Renders a PAM animation clip using an optimized, cached handle.
      * This avoids expensive String lookups in the hot render loop.
      */
-    public void draw(Batch batch, PamClip clip, float time, float x, float y, boolean loop) {
+    public void draw(Batch batch, ClipRef clip, float time, float x, float y, boolean loop) {
         if (clip != null) {
             drawInternal(batch, clip.ba, clip.range, time, loop, x, y, null, null);
         }
@@ -170,30 +170,33 @@ public final class PamPlayer {
     /**
      * Renders a PAM animation clip using an optimized, cached handle, with custom visibility.
      */
-    public void draw(Batch batch, PamClip clip, float time, float x, float y, boolean loop, Map<String, Boolean> partsVisibility) {
+    public void draw(Batch batch, ClipRef clip, float time, float x, float y, boolean loop, Map<String, Boolean> partsVisibility) {
         if (clip != null) {
             drawInternal(batch, clip.ba, clip.range, time, loop, x, y, partsVisibility, null);
         }
     }
 
     // clip info
-    /** Retrieves the physical bounds (width and height) of a specific animation clip. */
+
+    /** Retrieves the physical bounds (width and height) of a specific animation clip. as these
+     * methods need the parsed pam data, they will load it synced.
+    */
     public Rectangle bounds(String pam, String clip) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedSync(pam);
         return ba != null ? ba.bounds(clip) : null;
     }
     public Rectangle bounds(String pam) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedSync(pam);
         return ba != null ? ba.bounds(null) : null;
     }
     public List<String> clips(String pam) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedSync(pam);
         return ba != null ? ba.clips() : null;
     }
     
     /** Returns the total duration of the clip in seconds. */
     public float clipDurationSeconds(String pam, String clip) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedSync(pam);
         if (ba == null)
             return 1f;
         int[] r = ba.range(clip);
@@ -222,11 +225,33 @@ public final class PamPlayer {
 
     // not really usefull. only for the browser.
     public AnimationPart getParts(String pam) {
-        BakedAnimation ba = baked(pam);
+        BakedAnimation ba = bakedSync(pam);
         return ba != null ? recursivePartBuild(ba.rootPart) : null;
     }
 
     
+    /** Preloads a PAM animation and all its associated textures synchronously on the current thread. */
+    public void loadSync(String pam) {
+        if (bakedByPath.containsKey(pam)) {
+            return;
+        }
+        PamData anim = readAnimationFile(pam);
+        List<String> requiredAtlases = new ArrayList<>();
+        for (PamData.Image img : anim.images) {
+            pvz.libpvz.textures.ResourceIndex.ImageEntry entry = textures.getResourceIndex()
+                    .image(img.resourceId);
+            if (entry != null && entry.atlasId != null && !requiredAtlases.contains(entry.atlasId)) {
+                requiredAtlases.add(entry.atlasId);
+            }
+        }
+        for (String atlas : requiredAtlases) {
+            textures.loadSync(atlas);
+        }
+        BakedAnimation ba = new BakedAnimation(anim, textures.getResourceIndex());
+        ba.initializeTextures(textures);
+        bakedByPath.put(pam, ba);
+    }
+
     /** Preloads a PAM animation and all its associated textures asynchronously. */
     public void loadAsync(String pam, Runnable onLoaded) {
         if (bakedByPath.containsKey(pam)) {
@@ -249,10 +274,19 @@ public final class PamPlayer {
 
     // internal methods
 
-    private BakedAnimation baked(String pam) {
+    private BakedAnimation bakedAsync(String pam) {
         BakedAnimation ba = bakedByPath.get(pam);
         if (ba == null) {
             loadAsync(pam, null);
+        }
+        return ba;
+    }
+
+    private BakedAnimation bakedSync(String pam) {
+        BakedAnimation ba = bakedByPath.get(pam);
+        if (ba == null) {
+            loadSync(pam);
+            ba = bakedByPath.get(pam);
         }
         return ba;
     }
@@ -309,14 +343,17 @@ public final class PamPlayer {
             Part part = parts[currentPartId];
             String name = part.name;
             partQueueIdx++;
-            if (whiteListedPart == null && part.flags != 0)
-                continue;
+            boolean mapVisible = false;
             if (partVisibility != null && name != null) {
                 Boolean visible = partVisibility.get(name);
-                if (visible != null && !visible) {
-                    continue;
+                if (visible != null) {
+                    if (!visible) continue;
+                    mapVisible = true;
                 }
             }
+
+            if (whiteListedPart == null && !mapVisible && part.flags != 0)
+                continue;
             boolean inWhitelist = false;
             if (whiteListedPart != null) {
                 if (whiteListedPart.equals(name)) {
