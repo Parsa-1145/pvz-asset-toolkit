@@ -99,6 +99,8 @@ The repository includes a runnable playground demo (`Demo.java`) located in the 
    ./gradlew runDemo
    ```
 
+<img width="688" height="644" alt="libPVZ_Demo" src="https://github.com/user-attachments/assets/0d496925-54bb-4902-8f8e-3c431b3c632c" />
+
 ---
 
 ## Disclaimer
