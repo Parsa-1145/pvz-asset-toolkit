@@ -85,6 +85,20 @@ visibilityMap.put("zombie_armor_bucket_norm", true); // Show bucket armor
 player.draw(batch, walkClip, stateTime, x, y, true, visibilityMap);
 ```
 
+### 4. Direct Region & Texture Retrieval
+
+You can easily retrieve individual texture regions or full atlases directly from the `TextureBank`:
+
+```java
+// Fetch a specific sub-region by image resource ID
+TextureRegion region = textures.region("IMAGE_ZOMBIE_EGYPT_BASIC_HEAD");
+
+// Fetch a full texture atlas by atlas ID
+TextureRegion fullAtlas = textures.atlas("ATLAS_ZOMBIE_EGYPT_BASIC");
+```
+
+> 💡 **Finding Assets:** To visually discover PAM file paths, clip names, and texture region IDs, you can use the [PvZ Asset Browser](https://github.com/pizpizi/pvz-asset-browser) tool.
+
 ## Running the Demo
 
 The repository includes a runnable playground demo (`Demo.java`) located in the test sources.
