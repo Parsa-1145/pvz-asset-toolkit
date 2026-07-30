@@ -19,7 +19,7 @@ repositories {
     maven { url 'https://jitpack.io' }
 }
 dependencies {
-    implementation 'com.github.pizpizi:libPVZ:v0.1.0' // Replace v0.1.0 with desired release tag or commit hash
+    implementation 'com.github.pizpizi:libPVZ:v0.1.3' // Replace v0.1.0 with desired release tag or commit hash
 }
 ```
 
