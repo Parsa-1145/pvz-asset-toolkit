@@ -116,6 +116,35 @@ public final class TextureBank implements Disposable {
         source.dispose();
         return count;
     }
+    public int exportImage(String imageId, FileHandle outDir) {
+        String atlasId = resourceIndex.image(imageId).atlasId;
+        ResourceIndex.AtlasEntry atlas = resourceIndex.atlas(atlasId);
+        if (atlas == null) {
+            return 0;
+        }
+        FileHandle png = atlasLocator.resolve(atlas.path);
+        if (png == null) {
+            return 0;
+        }
+        Pixmap source = new Pixmap(png);
+        outDir.mkdirs();
+        int count = 0;
+        for (String image : resourceIndex.imageIds()) {
+            if(image != imageId) continue;
+            ResourceIndex.ImageEntry img = resourceIndex.image(image);
+            if (img == null || !atlasId.equals(img.atlasId) || img.aw <= 0 || img.ah <= 0) {
+                continue;
+            }
+            Pixmap part = new Pixmap(img.aw, img.ah, source.getFormat());
+            part.drawPixmap(source, 0, 0, img.ax, img.ay, img.aw, img.ah);
+            PixmapIO.writePNG(outDir.child(partFileName(img)), part);
+            part.dispose();
+            count++;
+        }
+        source.dispose();
+        return count;
+    }
+
     private static String partFileName(ResourceIndex.ImageEntry img) {
         String name = img.path == null ? "" : img.path.replace('\\', '/');
         int slash = name.lastIndexOf('/');

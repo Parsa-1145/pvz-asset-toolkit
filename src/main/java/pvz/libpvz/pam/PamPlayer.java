@@ -378,6 +378,8 @@ public final class PamPlayer {
             if (whiteListedPart != null && !tmpPartWhitelisted[partId])
                 continue;
             Part part = parts[partId];
+            if (part.texture == null || part.uv == null)
+                continue;
             int c8 = i * 8;
             float packed = white ? frame.colors[i] : multiply(frame.colors[i], batchColor);
             float u = part.uv[0], vv = part.uv[1], u2 = part.uv[2], v2 = part.uv[3];
