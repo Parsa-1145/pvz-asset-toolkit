@@ -132,16 +132,19 @@ public final class PamPlayer {
      */
     public void draw(Batch batch, String pam, String clip, float time, float x, float y, boolean loop) {
         BakedAnimation ba = bakedAsync(pam);
-        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, null, null);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, 1f, 1f, null,
+            null);
     }
     public void draw(Batch batch, String pam, String clip, float time, float x, float y, boolean loop,
             Map<String, Boolean> partsVisibility) {
         BakedAnimation ba = bakedAsync(pam);
-        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, partsVisibility, null);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y,
+                1f, 1f, partsVisibility, null);
     }
     public void drawPart(Batch batch, String pam, String clip, float time, float x, float y, String part) {
         BakedAnimation ba = bakedAsync(pam);
-        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, true, x, y, null, part);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, true, x, y, 1f, 1f, null,
+            part);
     }
 
 
@@ -163,7 +166,26 @@ public final class PamPlayer {
      */
     public void draw(Batch batch, ClipRef clip, float time, float x, float y, boolean loop) {
         if (clip != null) {
-            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, null, null);
+            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, 1f, 1f, null, null);
+        }
+    }
+
+    /**
+     * Renders a PAM animation with scale fields.
+     */
+    public void draw(Batch batch, String pam, String clip, float time, float x, float y, float scaleX, float scaleY, boolean loop) {
+        BakedAnimation ba = bakedAsync(pam);
+        if (ba != null) drawInternal(batch, ba, ba.range(clip), time, loop, x, y, scaleX, scaleY, null, null);
+    }
+
+    /**
+     * Renders a PAM animation using ClipRef with scale fields.
+     */
+    public void draw(Batch batch, ClipRef clip, float time, float x, float y, float scaleX,
+                     float scaleY,
+                     boolean loop) {
+        if (clip != null) {
+            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, scaleX, scaleY, null, null);
         }
     }
 
@@ -172,7 +194,8 @@ public final class PamPlayer {
      */
     public void draw(Batch batch, ClipRef clip, float time, float x, float y, boolean loop, Map<String, Boolean> partsVisibility) {
         if (clip != null) {
-            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, partsVisibility, null);
+            drawInternal(batch, clip.ba, clip.range, time, loop, x, y, 1f, 1f, partsVisibility,
+                    null);
         }
     }
 
@@ -312,13 +335,14 @@ public final class PamPlayer {
      * </ol>
      */
     private void drawInternal(Batch batch, BakedAnimation ba, int[] range, float time, boolean loop,
-            float x, float y, Map<String, Boolean> partVisibility, String whiteListedPart) {
+            float x, float y, float scaleX, float scaleY, Map<String, Boolean> partVisibility,
+                              String whiteListedPart) {
         if (ba == null || ba.frames.length == 0)
             return;
 
         float cw = ba.canvasWidth > 0f ? ba.canvasWidth : 1f;
         float ch = ba.canvasHeight > 0f ? ba.canvasHeight : 1f;
-        root.set(1f, 0f, 0f, -1f, x - cw / 2f, y + ch / 2f);
+        root.set(scaleX, 0f, 0f, -scaleY, x - cw / 2f, y + ch / 2f);
 
         int span = Math.max(1, range[1] - range[0] + 1);
         int fi = (int) Math.floor(time * ba.frameRate);
